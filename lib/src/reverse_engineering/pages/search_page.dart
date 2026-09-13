@@ -177,7 +177,8 @@ class _InitialData extends InitialData {
                     .nullIfWhitespace ??
                 renderer
                     .getJson<List<dynamic>>('viewCountText/runs')
-                    ?.firstOrNull
+                    ?.cast<Map<dynamic, dynamic>>()
+                    .firstOrNull
                     ?.getT<String>('text')
                     ?.stripNonDigits()
                     .nullIfWhitespace ??
@@ -195,7 +196,8 @@ class _InitialData extends InitialData {
           renderer.getJson<String>('publishedTimeText/simpleText'),
           renderer
                   .getJson<List<dynamic>>('viewCountText/runs')
-                  ?.elementAtSafe(1)
+                  ?.cast<Map<dynamic, dynamic>>()
+                  .elementAtSafe(1)
                   ?.getT<String>('text')
                   ?.trim() ==
               'watching',
@@ -241,7 +243,8 @@ class _InitialData extends InitialData {
             '',
         renderer
                 .getJson<List<dynamic>>('videoCountText/runs')
-                ?.first
+                ?.cast<Map<dynamic, dynamic>>()
+                .first
                 .getT<String>('text')
                 .parseInt() ??
             -1,
