@@ -119,6 +119,8 @@ extension StringUtility on String {
 }
 
 /// Utility for Strings.
+final _relativeDateExp = RegExp(r'(\d+)\s*([a-zA-Z]+)\s+ago');
+
 extension StringUtility2 on String? {
   static final RegExp _unitSplit = RegExp(r'^(\d+(?:\.\d+)?)(\w)?');
 
@@ -166,40 +168,42 @@ extension StringUtility2 on String? {
     return false;
   }
 
-  /// Format: {quantity} {unit} ago (5 years ago)
+  /// Format: {quantity} {unit} ago (5 years ago) or the short form YouTube
+  /// uses now (5y ago, 3mo ago), optionally after a word like "Streamed".
+  /// Returns null if the text is in any other format.
   DateTime? toDateTime() {
     if (this == null) {
       return null;
     }
 
-    var parts = this!.trim().split(' ');
-    if (parts.length == 4) {
-      // Streamed x y ago
-      parts = parts.skip(1).toList();
-    }
-
-    if (parts.length != 3) {
+    final match = _relativeDateExp.firstMatch(this!);
+    if (match == null) {
       return null;
     }
 
-    final qty = int.parse(parts.first);
+    final qty = int.parse(match.group(1)!);
+    final unit = match.group(2)!.toLowerCase();
 
-    // Try to get the unit
-    final unit = parts[1];
-
+    // 'mo' (months) must be checked before 'm' (minutes).
     final time = switch (unit) {
-      _ when unit.startsWith('second') => Duration(seconds: qty),
-      _ when unit.startsWith('minute') => Duration(minutes: qty),
-      _ when unit.startsWith('hour') => Duration(hours: qty),
-      _ when unit.startsWith('day') => Duration(days: qty),
-      _ when unit.startsWith('week') => Duration(days: qty * 7),
+      'mo' || 'mos' => Duration(days: qty * 30),
       _ when unit.startsWith('month') => Duration(days: qty * 30),
+      's' || 'sec' || 'secs' => Duration(seconds: qty),
+      _ when unit.startsWith('second') => Duration(seconds: qty),
+      'm' || 'min' || 'mins' => Duration(minutes: qty),
+      _ when unit.startsWith('minute') => Duration(minutes: qty),
+      'h' || 'hr' || 'hrs' => Duration(hours: qty),
+      _ when unit.startsWith('hour') => Duration(hours: qty),
+      'd' => Duration(days: qty),
+      _ when unit.startsWith('day') => Duration(days: qty),
+      'w' || 'wk' || 'wks' => Duration(days: qty * 7),
+      _ when unit.startsWith('week') => Duration(days: qty * 7),
+      'y' || 'yr' || 'yrs' => Duration(days: qty * 365),
       _ when unit.startsWith('year') => Duration(days: qty * 365),
-      _ => throw StateError("Couldn't parse $unit unit of time. "
-          'Please report this to the project page!')
+      _ => null,
     };
 
-    return DateTime.now().subtract(time);
+    return time == null ? null : DateTime.now().subtract(time);
   }
 
   Uri? toUri() {
